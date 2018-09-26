@@ -50,7 +50,7 @@ namespace DavidLievrouw.Api
             var entriesCollection = databaseForClient.GetCollection<Entry>("entries");
             await entriesCollection.BulkWriteAsync(bulkUpserts);
             var entriesToReturn = await entriesCollection.FindAsync(entry => entry.Value != null);
-            return Ok(entriesToReturn);
+            return Ok(await entriesToReturn.ToListAsync());
         }
 
         public class Entry

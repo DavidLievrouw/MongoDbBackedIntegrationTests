@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Configuration;
-using System.Web.Http;
-using Autofac.Integration.WebApi;
 using DavidLievrouw.Api;
 using Microsoft.Owin;
 using Owin;
@@ -19,14 +17,12 @@ namespace DavidLievrouw.Api
                 {
                     ExeConfigFilename = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile
                 }, ConfigurationUserLevel.None);
-
-            var containerBuilder = AutofacConfig.Configure(webConfig);
+            
+            var mongoConnectionString = ConfigurationManager.ConnectionStrings["mongo"].ConnectionString;
+            var containerBuilder = AutofacConfig.Configure(webConfig, mongoConnectionString);
             var container = containerBuilder.Build();
 
-            var config = new HttpConfiguration();
-            var resolver = new AutofacWebApiDependencyResolver(container);
-            config.DependencyResolver = resolver;
-            config.MapHttpAttributeRoutes();
+            var config = WebApiConfigurator.ConfigureWebApi(container);
             app.UseWebApi(config);
         }
     }

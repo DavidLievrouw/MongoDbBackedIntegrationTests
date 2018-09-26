@@ -8,9 +8,10 @@ namespace DavidLievrouw.Api
 {
     public static class AutofacConfig
     {
-        public static ContainerBuilder Configure(Configuration config)
+        public static ContainerBuilder Configure(Configuration config, string mongoConnectionString)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
+            if (mongoConnectionString == null) throw new ArgumentNullException(nameof(mongoConnectionString));
 
             var builder = new ContainerBuilder();
             builder.RegisterInstance(new AppSettingsReader(config)).AsSelf();
@@ -18,7 +19,7 @@ namespace DavidLievrouw.Api
             builder.Register(ctx =>
             {
                 var settingsReader = ctx.Resolve<AppSettingsReader>();
-                var mongoUrl = new MongoUrl(settingsReader.ReadConnectionString("mongo").ConnectionString);
+                var mongoUrl = new MongoUrl(mongoConnectionString);
                 var databaseName = settingsReader.ReadAppSetting("DatabaseName");
                 return new MongoConnectionInformation(mongoUrl, databaseName);
             }).AsSelf().SingleInstance();
