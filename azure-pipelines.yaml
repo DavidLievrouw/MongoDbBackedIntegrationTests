@@ -8,9 +8,28 @@ queue:
 
 variables:
   BuildConfiguration: 'Release'
+  RunIntegrationTests: 'true'
 steps:
 - task: NuGetCommand@2
   displayName: 'NuGet restore'
+
+
+- task: VSBuild@1
+  displayName: 'Build and package API'
+  inputs:
+    solution: Api/Api.csproj
+
+    msbuildArgs: '/p:DeployOnBuild=true /p:PublishProfile="Package"'
+
+    configuration: '$(BuildConfiguration)'
+
+
+- task: VSBuild@1
+  displayName: 'Build integration tests'
+  inputs:
+    solution: Api.IntegrationTests/Api.IntegrationTests.csproj
+
+    configuration: '$(BuildConfiguration)'
 
 
 - task: VisualStudioTestPlatformInstaller@1
@@ -19,19 +38,11 @@ steps:
     versionSelector: latestStable
 
 
-- task: VSBuild@1
-  displayName: 'Build solution'
-  inputs:
-    msbuildArgs: '/p:DeployOnBuild=true /p:PublishProfile="Package" /p:OutputPath="$(System.DefaultWorkingDirectory)/_Package" /p:AutoParameterizationWebConfigConnectionStrings=False'
-
-    configuration: '$(BuildConfiguration)'
-
-
 - task: VSTest@2
   displayName: 'Run integration tests'
   inputs:
     testAssemblyVer2: |
-     **\*IntegrationTests.dll
+     **/*IntegrationTests.dll
      !**\*TestAdapter.dll
      !**\obj\**
 
@@ -42,9 +53,9 @@ steps:
 - task: CopyFiles@2
   displayName: 'Copy package to staging'
   inputs:
-    SourceFolder: '$(System.DefaultWorkingDirectory)/_Package'
+    SourceFolder: 'Api\bin\$(BuildConfiguration)\Publish'
 
-    Contents: '_PublishedWebsites/Api_Package/*.*'
+    Contents: '**/*'
 
     TargetFolder: '$(Build.ArtifactStagingDirectory)/$(BuildConfiguration)/Api'
 
@@ -52,10 +63,7 @@ steps:
 
     OverWrite: true
 
-    flattenFolders: true
-
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
-
 
