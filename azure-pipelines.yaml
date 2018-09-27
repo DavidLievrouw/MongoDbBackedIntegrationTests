@@ -1,0 +1,61 @@
+resources:
+- repo: self
+queue:
+  name: Hosted VS2017
+  demands: 
+  - msbuild
+  - visualstudio
+
+variables:
+  BuildConfiguration: 'Release'
+steps:
+- task: NuGetCommand@2
+  displayName: 'NuGet restore'
+
+
+- task: VisualStudioTestPlatformInstaller@1
+  displayName: 'Visual Studio Test Platform Installer'
+  inputs:
+    versionSelector: latestStable
+
+
+- task: VSBuild@1
+  displayName: 'Build solution'
+  inputs:
+    msbuildArgs: '/p:DeployOnBuild=true /p:PublishProfile="Package" /p:OutputPath="$(System.DefaultWorkingDirectory)/_Package" /p:AutoParameterizationWebConfigConnectionStrings=False'
+
+    configuration: '$(BuildConfiguration)'
+
+
+- task: VSTest@2
+  displayName: 'Run integration tests'
+  inputs:
+    testAssemblyVer2: |
+     **\*IntegrationTests.dll
+     !**\*TestAdapter.dll
+     !**\obj\**
+
+    vsTestVersion: toolsInstaller
+
+  condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['RunIntegrationTests'], 'true')))
+
+- task: CopyFiles@2
+  displayName: 'Copy package to staging'
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)/_Package'
+
+    Contents: '_PublishedWebsites/Api_Package/*.*'
+
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/$(BuildConfiguration)/Api'
+
+    CleanTargetFolder: true
+
+    OverWrite: true
+
+    flattenFolders: true
+
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+
+
