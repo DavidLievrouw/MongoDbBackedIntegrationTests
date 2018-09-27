@@ -25,7 +25,7 @@ namespace DavidLievrouw.Api
         public string Build()
         {
             var pack = new ConventionPack {new CamelCaseElementNameConvention()};
-            ConventionRegistry.Register("RecoMaticsConventions", pack, t => true);
+            ConventionRegistry.Register("DaLiConventions", pack, t => true);
 
             Console.WriteLine($"Starting {nameof(Mongo2Go)}...");
             _runner = MongoDbRunner.Start();
